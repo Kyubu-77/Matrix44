@@ -1028,11 +1028,6 @@ const uint8_t Matrix_BitmapData[] PROGMEM = {
     0x00,0x00,0x00,0x00,0x00,0x00
 };
 
-// uint16_t bitmapOffset;     // Pointer into GFXfont->bitmap
-// uint8_t  width, height;    // Bitmap dimensions in pixels
-// uint8_t  xAdvance;         // not used -- Distance to advance cursor (x axis)
-// int8_t   xOffset, yOffset; // not used -- Dist from cursor pos to UL corner
-
 const uint8_t Matrix_GlyphDataLength = 77;
 const Glyph Matrix_GlyphData[] PROGMEM = {
     {0, 12, 12, 14, 0, -12}, 

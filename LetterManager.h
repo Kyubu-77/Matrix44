@@ -2,22 +2,24 @@
 //
 #include "Configuration.h"
 #include "Letter.h"
+#include "Utils.h"
 
 class LetterManager {
 
 public:
 	LetterManager() {
+		uint16_t  i = 0;
+		while (i < MAX_LETTERS) { 
+			letterBuffer[i].Id = i; 
+			i++;
+		};
 	}
 
 	Letter * GetFreeLetter() {
-		byte i = 0;
-		while (letterBuffer[i].Active  && i < MAX_LETTERS) {
-			i++;
+		for (uint16_t i = 0; i < MAX_LETTERS; i++) {
+			if (!letterBuffer[i].Active) return  &letterBuffer[i];
 		}
-
-		if (i < MAX_LETTERS) {
-			return &letterBuffer[i];
-		}
+		// ok,
 		return NULL;
 	}
 

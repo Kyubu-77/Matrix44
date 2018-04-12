@@ -7,12 +7,12 @@ class Letter {
 
 public:
 	Letter();
-	void Init(float x, float y, char character, float speed, float alfaDecay, Letter * prev);
+	void Init(float x, float y, char character, float speed, float alfaDecay, Letter * prev, boolean highlander);
 	void Tick(uint16_t ms);
 	
 public:
 	uint16_t Id;
-	boolean Active;
+	bool Active;
 		
 	float X;
 	float Y;
@@ -30,15 +30,15 @@ public:
 private:
 	float alfaDecay;
 	
-
+	bool highlander;
 	float speed;
 	
-	boolean isChangingCharacterLetter;
+	bool isChangingCharacterLetter;
 	uint16_t changeCounter;
 	uint16_t changeMS;
-
-	boolean deActiveOnNextTick;
-	
+public:
+	bool deActiveOnNextTick;
+private:
 	unsigned long  lifeTimeMsCounter;
 };
 

@@ -1,6 +1,5 @@
-
-#include "ILI9341_t3_sk.h"
 #include <SPI.h>
+#include "ILI9341_t3_sk.h"
 
 #define SPICLOCK 30000000
 
@@ -20,7 +19,7 @@ void ILI9341_t3_sk::writeRect4BPP(int16_t x, int16_t y, int16_t w, int16_t h, co
 			writedata16_cont(palette[(*pixels++) & 0xF]);
 		}
 
-		// support for drawing uneven widhts
+		// support for drawing uneven widths
 		if (x == 2) {
 			writedata16_cont(palette[((*pixels) >> 4) & 0xF]);
 			writedata16_last(palette[(*pixels++) & 0xF]);

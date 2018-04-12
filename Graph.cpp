@@ -1,9 +1,7 @@
-//#include "WProgram.h" // TODO remove
 //
 #include "Configuration.h"
 #include "Graph.h"
 #include "BitmapFont.h"
-#include "Printer.h"
 #include "Utils.h"
 
 #include "Stripe.h"
@@ -18,17 +16,19 @@ Graph::Graph(ILI9341_t3_sk &t, uint8_t stripeCount) {
 	firstStripe = NULL;
 	lastAddedStripe = NULL;
 
-	// Init stripes
+	// Init stripes Id
 	for (int i = 0; i < MAX_STRIPES; i++) {
 		stripes[i].Id = i;
 	}
 }
 
+// Set palette information for drawing the glyphs. Therefore the given palette is used to calc <ALPHA_COUNT> palettes to simulate the fading out of a glyph.
+// The imput palette musst use 3 RGB bytes per pixel (color888), the palette output format is color565 for usage the the mini tft.
 void Graph::SetPalette(const uint8_t *palette, uint8_t paletteSize, uint8_t alpha_bits) {
 	if (palettes) delete palettes;
-	palettes = new uint16_t[ALPHA_COUNT*paletteSize]();
+	palettes = new uint16_t[ALPHA_COUNT * paletteSize]();
 
-	Serialprint("Allocate %d bytes for %d palettes\n", ALPHA_COUNT*paletteSize, ALPHA_COUNT);
+	// Serialprint("Allocate %d bytes for %d palettes\n", ALPHA_COUNT * paletteSize, ALPHA_COUNT);
 
 	float alphaDiv = 1.0 / (ALPHA_COUNT - 1);
 
@@ -48,7 +48,7 @@ void Graph::SetPalette(const uint8_t *palette, uint8_t paletteSize, uint8_t alph
 				palette[3 * i],
 				palette[3 * i + 1],
 				palette[3 * i + 2], r, g, b);*/
-			palettes[alpha*paletteSize + inv] = ILI9341_t3::color565(r, g, b);
+			palettes[alpha * paletteSize + inv] = ILI9341_t3::color565(r, g, b);
 		}
 	}
 }
@@ -60,14 +60,12 @@ void Graph::SetFont(const BitmapFont &font) {
 }
 
 void Graph::Tick(word diff) {
-
 	addNewStripeCounterMs += diff;
 
 	if (addNewStripeCounterMs > newStripInMs) {
-		newStripInMs = variance(NEW_STRIPE_EVERY_MS, NEW_STRIPE_EVERY_MS_VARIATON);
-
-		addNewStripeCounterMs = 0;
 		AddNewStripe();
+		addNewStripeCounterMs = 0;
+		newStripInMs = variance(NEW_STRIPE_EVERY_MS, NEW_STRIPE_EVERY_MS_VARIATON);
 	}
 
 	Stripe * stripe = firstStripe;
@@ -91,8 +89,9 @@ void Graph::Tick(word diff) {
 // TODO improve performance
 Stripe* Graph::GetFreeStripe() {
 	uint8_t i = 0;
-	while (stripes[i].Active == true && i < MAX_STRIPES) 	i++;
-	if (i < MAX_STRIPES) return &stripes[i];
+	for (uint16_t i = 0; i < MAX_STRIPES; i++) {
+		if (!stripes[i].Active) return  &stripes[i];
+	}
 	return NULL;
 }
 
@@ -117,12 +116,14 @@ void Graph::AddNewStripe() {
 
 void Graph::Draw() {
 	Stripe *stripe = firstStripe;
-
+	Serialprint("Graph::Draw %d\n", millis());
 	while (stripe) {
 
 		Letter *curLetter = stripe->FirstLetter;
+
 		while (curLetter) {
-			DrawGlyph(curLetter->X, curLetter->Y, curLetter->Character, ALPHA_COUNT - 1); // or /2^LAB
+			// Serialprint("Draw Letter %d X = %f  \n", curLetter->Id, curLetter->X);
+			DrawGlyph(curLetter->X, curLetter->Y, curLetter->Character, (uint8_t)(curLetter->Alfa * ALPHA_FACTOR)); // or /2^LAB
 
 			// clear area above if required
 			if (!curLetter->letterAbove) {
@@ -135,11 +136,11 @@ void Graph::Draw() {
 			curLetter = curLetter->next;
 		}
 
-		if (stripe->Visible) {
+		if (stripe->MainLetterVisible) {
 			DrawGlyph(stripe->X, stripe->Y, stripe->MainLetter, ALPHA_COUNT - 1);
 		}
 
-		// clear area above if required
+		// clear area above mainletter if required
 		if (!stripe->LetterAbove) {
 #ifdef ROTATED
 			tft->fillRect(stripe->LastX, stripe->Y, (int16_t)stripe->X - (int16_t)stripe->LastX, CLEAR_WIDTH, 0x0000);
@@ -147,18 +148,16 @@ void Graph::Draw() {
 			tft->fillRect(stripe->X, stripe->LastY, CLEAR_WIDTH, (int16_t)stripe->Y - (int16_t)stripe->LastY, 0x0000);
 #endif
 		}
-
-		//delay(10);
 		stripe = stripe->Next;
 	}
 }
 
 
-// Draws a glyph at the given position and performs clipping if required
+// Draws a glyph at the given position and perform clipping if required
 void Graph::DrawGlyph(int16_t x, int16_t y, byte glyphId, byte alpha) {
-	byte width			= glyphs[glyphId].width;
+	byte width = glyphs[glyphId].width;
 	byte nextLineOffset = (width >> 1) + (width % 2); // Ok
-	byte height			= glyphs[glyphId].height;
+	byte height = glyphs[glyphId].height;
 	uint16_t offset = glyphs[glyphId].bitmapOffset;
 
 	if ((x >= 0) && (y >= 0) && (x + width < TFT_WIDTH) && (y + height < TFT_HEIGHT)) {
@@ -178,6 +177,7 @@ void Graph::DrawGlyph(int16_t x, int16_t y, byte glyphId, byte alpha) {
 		//not needed
 		//int16_t screen_xe = min(x + width, tftMaxX);
 		//int16_t screen_ye = min(y + height, tftMaxY);
+
 		if (x_overlap == width && y_overlap > 0) {
 			// draw full width of bitmap
 			tft->writeRect4BPP(screen_xs, screen_ys, x_overlap, y_overlap, &bitmapData[offset + pic_ys * nextLineOffset], alphaToPalette[alpha]);

@@ -1,7 +1,6 @@
 #include "Configuration.h"
 #include "Letter.h"
 #include "Utils.h"
-#include "Printer.h"
 //
 Letter::Letter()
 {
@@ -21,9 +20,9 @@ Letter::Letter()
 	Character = '#';
 	letterAbove = NULL;
 
-	
+
 	alfaDecay = 0;
-	
+	highlander = false;
 	speed = 0;
 
 	isChangingCharacterLetter = false;
@@ -35,7 +34,7 @@ Letter::Letter()
 	lifeTimeMsCounter = 0;
 }
 
-void Letter::Init(float x, float y, char character, float speed, float alfaDecay, Letter * prev) {
+void Letter::Init(float x, float y, char character, float speed, float alfaDecay, Letter * prev, boolean highlander) {
 	Serialprint("Letter::Init id %d at x %f y %f speed %f\n", Id, x, y, speed);
 	Active = true;
 	this->X = x;
@@ -53,24 +52,25 @@ void Letter::Init(float x, float y, char character, float speed, float alfaDecay
 	next = NULL;
 	this->Character = character;
 	this->letterAbove = prev;
-	
+
 
 	this->alfaDecay = alfaDecay;
-	
+	this->highlander = highlander;
 	this->speed = speed;
 
 	isChangingCharacterLetter = false;
-	changeCounter = 0;
-	changeMS = 0;
-
-	deActiveOnNextTick = false;
-
-	lifeTimeMsCounter = 0;
-
 	if (nextFloat() < CHANGING_LETTER_PROBAPILITY) {
 		isChangingCharacterLetter = true;
 		changeMS = variance(CHANGING_LETTER_MS, CHANGING_LETTER_MS_VARIATON);
 	}
+	else {
+		changeCounter = 0;
+		changeMS = 0;
+	}
+
+	deActiveOnNextTick = false;
+
+	lifeTimeMsCounter = 0;
 }
 
 void Letter::Tick(uint16_t ms) {
@@ -83,7 +83,7 @@ void Letter::Tick(uint16_t ms) {
 		if (prev) {
 			prev->next = next;
 		}
-		Serialprint("Letter::Tick free letter id %d", Id);
+		Serialprint("Letter::Tick free letter id %d\n", Id);
 		Active = false;
 		return;
 	}
@@ -98,28 +98,26 @@ void Letter::Tick(uint16_t ms) {
 
 	lifeTimeMsCounter += ms;
 
-	if (isChangingCharacterLetter)
-	{
+	if (isChangingCharacterLetter) {
 		changeCounter += ms;
-		if (changeCounter > changeMS)
-		{
+		if (changeCounter > changeMS) {
 			changeCounter %= changeMS;
 			Character = (nextUInt16() % (MAX_GLYPH - 1)) + 1;
 		}
 	}
 
-	if (lifeTimeMsCounter > LETTER_ALPHA_DEGREASE_AFTER_MS)
-	{
+	if (lifeTimeMsCounter > LETTER_ALPHA_DEGREASE_AFTER_MS) {
 		Alfa -= alfaDecay;
 	}
 
 #ifdef ROTATED
-	if (X >= TFT_WIDTH || Alfa < 0)
+	if (X >= TFT_WIDTH || Alfa < 0) {
 #else
-	if (Y >= TFT_HEIGHT || Alfa < 0)
+	if (Y >= TFT_HEIGHT || Alfa < 0) {
 #endif
-	{
-		// keep the letter active for the next draw step, this is requried for screen cleanup with a black letter
-		deActiveOnNextTick = true;
+		//Serialprint("Letter::Tick deactivate %f\n", X);
+		// Keep the letter active for the next draw step, this is requried for screen cleanup with a black letter,
+		// but highLander letters are deactivate by the stripe
+		if (!highlander) deActiveOnNextTick = true;
 	}
 }

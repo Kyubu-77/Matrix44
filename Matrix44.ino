@@ -1,15 +1,9 @@
-#include <font_Arial.h>
-#include <font_ArialBold.h>
-#include <ILI9341_t3.h>
-
 #include "Arduino.h"
 
 //Teensy
-#include "SPI.h"
 #include "ILI9341_t3_sk.h"
 
 //Own 
-#include "Printer.h"
 #include "Utils.h"
 
 #include "Configuration.h"
@@ -73,7 +67,7 @@ void loop() {
 		lastTick = now;
 		graph.Tick(diff);
 		graph.Draw();
-		delay(10);
+		 delay(10);
 	}
 
 }

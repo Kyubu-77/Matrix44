@@ -15,11 +15,10 @@ public:
 private:
 	Letter * AddLetterToStripe(char character, int16_t yOffset4firstletter);
 	
-
 public:	
 	uint16_t Id;
 	boolean Active; // stripes lifetime is over or letter the screen
-	boolean Visible;
+	boolean MainLetterVisible;
 		
 	float X;
 	float Y;
@@ -47,7 +46,7 @@ private:
 	unsigned long lifeTimeMsCounter;
 	unsigned long maxLifeTimeMs;
 
-	float stripesAlfaDecayOfLetters; // only for non static letters
+	float stripesAlfaDecayOfLettersMs; // only for non static letters
 
 	boolean hasStaticLetters;
 	uint16_t staticLettersAfterNthLetters;
